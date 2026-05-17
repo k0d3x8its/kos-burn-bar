@@ -33,7 +33,7 @@ The burn bar opens automatically on vault load in the right sidebar. You can als
 
 ## The Display
 
-![KOS Burn Bar screenshot](screenshot.png)
+![KOS Burn Bar screenshot](assets/kos-burn-bar.png)
 
 > *Screenshot coming soon. The burn bar renders as a pinned panel in Obsidian's right sidebar showing two copper gradient progress bars (token burn and message usage), a live blinking indicator, and a four-cell stats row beneath with burn rate, cost rate, reset countdown, and active model.*
 
