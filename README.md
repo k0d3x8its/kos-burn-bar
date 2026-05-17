@@ -27,26 +27,15 @@ No build step required.
 3. Drop all three files into that folder
 4. Open Obsidian → Settings → Community Plugins → enable **KOS Burn Bar**
 
-The burn bar opens automatically on vault load. You can also open it from the flame icon in the ribbon or via the command palette (`Open KOS Burn Bar`).
+The burn bar opens automatically on vault load in the right sidebar. You can also open it from the flame icon in the ribbon or via the command palette (`Open KOS Burn Bar`).
 
 ---
 
 ## The Display
 
-```
-$ TOKEN BURN · 5H WINDOW                          last pull 12s ago
-████████████████████░░░░░░░░░░░░░░░░░░░░  74.2%   310.2K / 418K
-                                                   0    104K  209K  313K  418K
+![KOS Burn Bar screenshot](screenshot.png)
 
-$ MESSAGES · 5H WINDOW
-██████████████░░░░░░░░░░░░░░░░░░░░░░░░░░  55.0%   88 / 160
-
-──────────────────────────────────────────────────────────────────
-BURN RATE          API COST RATE      RESETS IN         MODEL
-2445.7 tokens/min  $0.0337 /min       1h 42m            Sonnet 4.6
-runs out ~4:15 PM  $11.64 used via    @ 6:00 PM         99.7% · Haiku 0.3%
-                   API
-```
+> *Screenshot coming soon. The burn bar renders as a pinned panel in Obsidian's right sidebar showing two copper gradient progress bars (token burn and message usage), a live blinking indicator, and a four-cell stats row beneath with burn rate, cost rate, reset countdown, and active model.*
 
 ### Token Burn Bar
 Shows tokens used vs your detected (or manually set) 5-hour limit. Percentage can exceed 100% — this means you are over limit and Claude Code may rate-limit you.
@@ -58,9 +47,9 @@ Tracks the number of user messages sent in the current window. The message limit
 
 | Stat | What it shows |
 |------|---------------|
-| **BURN RATE** | Output tokens generated per minute, averaged over the last 60 minutes. Includes estimated exhaustion time. |
-| **API COST RATE** | Output tokens priced at Anthropic API rates ($/min). Shows total session API-equivalent cost. **Pro plan users: this is not your actual charge** — you pay a flat subscription. |
-| **RESETS IN** | Countdown to when your 5-hour window expires and limits reset. |
+| **BURN RATE** | Total tokens (input + output) per minute, averaged over the last 60 minutes. Includes estimated exhaustion time. |
+| **API COST RATE** | Tokens priced at Anthropic API rates ($/min). Shows total session API-equivalent cost. **Pro plan users: this is not your actual charge** — you pay a flat subscription. |
+| **RESETS IN** | Live countdown to when your 5-hour window expires and limits reset. |
 | **MODEL** | Which Claude model(s) generated tokens this session and their percentage share. |
 
 ---
@@ -83,19 +72,14 @@ Between full refreshes, the bar advances smoothly every second using the current
 
 If no manual limit is set, the plugin auto-detects your limit using p90 of completed session block totals from the past 8 days. This prevents the current session from setting its own limit (circular: limit = current usage = 100% always).
 
-**Important: Claude Pro's 5-hour token limit is not a fixed number.** Anthropic adjusts it dynamically based on platform demand and server load. Off-peak hours (nights, weekends) typically yield higher limits (200K–400K+). Peak daytime hours typically yield lower limits (40K–100K). Your subscription guarantees access, not a specific quota.
-
-This means:
-- A manual override calibrated during off-peak hours will show artificially low percentages during peak hours
-- Auto-detection (p90) adapts over time but lags the current window — it reflects your recent historical average, not today's dynamic ceiling
-- Neither method is perfectly accurate; both are best-effort approximations of a moving target
+Set a manual limit in settings if you know your plan's ceiling.
 
 ### Cost Calculation
 
 Uses Anthropic's published API pricing with full tiered breakdown:
 
-| Token type | Sonnet | Opus | Haiku |
-|------------|--------|------|-------|
+| Token type | Sonnet | Opus | Haiku 3.5 |
+|------------|--------|------|-----------|
 | Input (uncached) | $3.00/1M | $15.00/1M | $0.80/1M |
 | Cache write | $3.75/1M | $18.75/1M | $1.00/1M |
 | Cache read | $0.30/1M | $1.50/1M | $0.08/1M |
@@ -111,7 +95,7 @@ Cache read dominates long sessions because every turn replays the full conversat
 |---------|---------|-------------|
 | **Token limit (manual override)** | 0 (auto) | Set to your known 5h token ceiling. 0 = auto-detect from session history. Pro plan users: calibrate by dividing current token count by claude.ai's displayed percentage. |
 | **Fallback limit** | 44,000 | Used when auto-detection has no history yet. |
-| **Refresh interval (seconds)** | 5 | How often to re-read session logs. Lower = more accurate percentage. At 5s and 2400 tokens/min, max staleness is ~0.07% on a 300K limit. File cache keeps CPU impact minimal. |
+| **Refresh interval (seconds)** | 5 | How often to re-read session logs. Lower = more accurate percentage. At 5s and 2400 tokens/min, max staleness is ~0.07% on a 300K limit. File cache keeps CPU impact minimal. Enter a value between 5 and 300. |
 | **Timezone** | America/New_York | IANA timezone for reset time display. |
 | **Project filter** | (blank) | Restrict tracking to one Claude Code project. Enter any part of your working directory name (e.g. `ace-vault`). Leave blank to track all projects — recommended, since Claude Code rate limits are account-wide. |
 | **Auto-open on vault start** | on | Opens the burn bar panel automatically when Obsidian loads. |
@@ -124,8 +108,6 @@ If you're on a Claude Pro subscription and want the percentage to match claude.a
 2. Note the percentage claude.ai shows for the same moment (e.g. `74%`)
 3. Calculate: `310,000 ÷ 0.74 ≈ 418,919`
 4. Enter `418000` (round down) in **Token limit (manual override)**
-
-**Re-calibrate whenever you notice the burn bar drifting from claude.ai's percentage.** Because Anthropic's limit shifts with platform demand, a calibration from last night may be wrong by morning. If the burn bar shows a significantly different percentage than claude.ai for the same session, recalibrate using the steps above for the current window.
 
 Re-calibrate if you change Claude plans.
 
@@ -144,25 +126,10 @@ Use the **Project filter** setting to scope to one project if you prefer per-ses
 
 ---
 
-## Known Limitations
-
-### Reset time is approximate (~15–25 min variance)
-
-The RESETS IN countdown will never exactly match claude.ai's timer. The reason is structural: when Claude Code starts a session, it sends initialization requests to Anthropic's servers (loading `CLAUDE.md`, system prompts, memory files) before writing any records to the local JSONL log. Anthropic's 5-hour clock starts on receipt of that first API request. The JSONL file only starts recording from your first actual chat message — by then, 15–25 minutes of the window have already elapsed invisibly.
-
-This gap cannot be closed. The plugin has no access to Anthropic's server-side session start time. The countdown is prefixed with `~` to reflect this.
-
-### Token limit is approximate
-
-Claude Pro's 5-hour token limit is not a fixed number — Anthropic adjusts it dynamically based on platform demand and server load. A calibration done during off-peak hours (higher limit) will read incorrectly during peak hours (lower limit). See [Calibrating the Token Limit](#calibrating-the-token-limit) for recalibration steps.
-
----
-
 ## Notes
 
 - **Desktop only** — requires filesystem access to `~/.claude/projects/`
 - **Pro plan users** — the API COST RATE and "used via API" figures show what your usage would cost at pay-per-token API rates. Your actual charge is your flat subscription fee.
-- **Token limits are dynamic** — Anthropic adjusts your 5-hour ceiling based on platform load. The burn bar is an approximation; always cross-check with claude.ai when precision matters.
 - The burn bar is a read-only observer — it never writes to or modifies Claude Code's session files.
 
 ---
