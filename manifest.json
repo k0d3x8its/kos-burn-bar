@@ -1,0 +1,10 @@
+{
+  "id": "kos-burn-bar",
+  "name": "KOS Burn Bar",
+  "version": "1.1.0",
+  "minAppVersion": "1.4.0",
+  "description": "Token burn progress bar for Claude Code. Reads ~/.claude session logs and displays a live burn meter showing your 5-hour rolling window usage.",
+  "author": "K0d3x",
+  "authorUrl": "https://github.com/k0d3x8its",
+  "isDesktopOnly": true
+}
