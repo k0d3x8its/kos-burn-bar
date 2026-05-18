@@ -9,7 +9,7 @@
 
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-supported-FC5A28?logo=claude&logoColor=white)](https://claude.ai/code)
 
-</div></br>
+</div>
 
 An Obsidian plugin that displays a live token burn meter for Claude Code sessions. Part of the [KOS](https://github.com/k0d3x8its/kos) toolkit.
 
