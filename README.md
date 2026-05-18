@@ -1,6 +1,6 @@
 # KOS Burn Bar
 
-An Obsidian plugin that displays a live token burn meter for Claude Code sessions. Part of the [Kodex OS](https://github.com/k0d3x8its/kos) toolkit.
+An Obsidian plugin that displays a live token burn meter for Claude Code sessions. Part of the [KOS](https://github.com/k0d3x8its/kos) toolkit.
 
 ---
 
@@ -34,8 +34,6 @@ The burn bar opens automatically on vault load in the right sidebar. You can als
 ## The Display
 
 ![KOS Burn Bar screenshot](assets/kos-burn-bar.png)
-
-> *Screenshot coming soon. The burn bar renders as a pinned panel in Obsidian's right sidebar showing two copper gradient progress bars (token burn and message usage), a live blinking indicator, and a four-cell stats row beneath with burn rate, cost rate, reset countdown, and active model.*
 
 ### Token Burn Bar
 Shows tokens used vs your detected (or manually set) 5-hour limit. Percentage can exceed 100% — this means you are over limit and Claude Code may rate-limit you.
@@ -115,7 +113,7 @@ Re-calibrate if you change Claude plans.
 
 ## Cross-Project Aggregation
 
-By default the burn bar aggregates all Claude Code projects into one 5-hour window. This is intentional — Claude Code's rate limits are account-wide, not per-project. If you run multiple Claude Code sessions simultaneously, all token usage counts against the same limit.
+This project was inspired by [CLaude Code Monitor](https://github.com/Maciek-roboblog/Claude-Code-Usage-Monitor). By default the burn bar aggregates all Claude Code projects into one 5-hour window. This is intentional — Claude Code's rate limits are account-wide, not per-project. If you run multiple Claude Code sessions simultaneously, all token usage counts against the same limit.
 
 Tools like Claude Code Monitor (CCM) track only the current session, so their numbers will be lower. Neither is wrong — they answer different questions:
 
@@ -134,6 +132,6 @@ Use the **Project filter** setting to scope to one project if you prefer per-ses
 
 ---
 
-## Part of Kodex OS
+## Part of KOS Toolkit
 
-KOS Burn Bar is a companion tool for the [KOS vault system](https://github.com/k0d3x8its/kos). KOS transforms an Obsidian vault into an LLM-maintained knowledge base using Claude Code as the librarian. The burn bar lets you monitor your Claude Code usage while running KOS operations — so a long `/kos-ingest` session doesn't catch you off guard at the rate limit wall.
+KOS Burn Bar is a companion tool for the [KOS Toolkit](https://github.com/k0d3x8its/kos). KOS transforms an Obsidian vault into an LLM-maintained knowledge base using Claude Code as the librarian. The burn bar lets you monitor your Claude Code usage while running KOS operations — so a long `/kos-ingest` session doesn't catch you off guard at the rate limit wall.
