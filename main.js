@@ -40,23 +40,29 @@ const PRICING = {
 };
 
 /**
- * Parse a user-supplied reset time string ("14:45" or "2:45 PM") into a Date
- * for today. Returns null if the string is empty, invalid, or already past.
- * Expired overrides return null so the bar reverts to log-derived values.
+ * Parse a duration string ("1h 16m", "1h", "45m") into milliseconds.
+ * Returns null if empty or unparseable.
  */
-function parseResetOverride(str) {
+function parseDurationMs(str) {
   if (!str || !str.trim()) return null;
-  const m = str.trim().match(/^(\d{1,2}):(\d{2})(?:\s*(am|pm))?$/i);
-  if (!m) return null;
-  let h = parseInt(m[1]);
-  const min = parseInt(m[2]);
-  const meridiem = m[3] ? m[3].toLowerCase() : null;
-  if (meridiem === "pm" && h < 12) h += 12;
-  if (meridiem === "am" && h === 12) h = 0;
-  if (h < 0 || h > 23 || min < 0 || min > 59) return null;
-  const now = new Date();
-  const t = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, min, 0, 0);
-  return t > now ? t : null;
+  const m = str.trim().match(/^(?:(\d+)h)?\s*(?:(\d+)m)?$/i);
+  if (!m || (!m[1] && !m[2])) return null;
+  const h = parseInt(m[1] || "0");
+  const min = parseInt(m[2] || "0");
+  if (h === 0 && min === 0) return null;
+  return (h * 60 + min) * 60000;
+}
+
+/**
+ * Returns the stored override end time if it's still in the future.
+ * The end time is computed once when the user saves the setting and
+ * stored as epoch ms — so the countdown actually decrements over time.
+ */
+function getResetOverride(settings) {
+  const end = settings.resetTimeOverrideEnd || 0;
+  if (!end) return null;
+  const t = new Date(end);
+  return t > new Date() ? t : null;
 }
 
 function getPrice(model) {
@@ -81,7 +87,8 @@ const DEFAULT_SETTINGS = {
   autoOpen:          true,
   timezone:          "America/New_York",
   projectFilter:     "",
-  resetTimeOverride: "",
+  resetTimeOverride:    "",
+  resetTimeOverrideEnd: 0,
 };
 
 
@@ -522,8 +529,12 @@ class BurnBarView extends ItemView {
     const m = Math.floor((totalSec % 3600) / 60);
     const s = totalSec % 60;
     if (h === 0 && m < 10) return `${m}m ${s}s`;
-    if (h > 0) return `${h}h ${m}m`;
-    return `${m}m`;
+    if (h > 0) {
+      const mR = s >= 30 ? m + 1 : m;
+      return mR < 60 ? `${h}h ${mR}m` : `${h + 1}h 0m`;
+    }
+    const mR = s >= 30 ? m + 1 : m;
+    return mR < 60 ? `${mR}m` : "1h 0m";
   }
 
   fmtTime(date) {
@@ -664,7 +675,7 @@ class BurnBarView extends ItemView {
       ? s.manualLimit
       : detectTokenLimit(records, s.fallbackLimit);
     const u = computeUsage(records, tokenLimit);
-    const overrideEnd = parseResetOverride(s.resetTimeOverride || "");
+    const overrideEnd = getResetOverride(s);
 
     // Persist state for tick() extrapolation
     this._sessionEnd          = overrideEnd || (u.isIdle ? null : u.sessionEnd);
@@ -874,17 +885,19 @@ class BurnBarSettingTab extends PluginSettingTab {
         "The burn bar infers your reset time from local session logs. " +
         "If you pause Claude Code for more than an hour mid-window, the log parser " +
         "may start a new session block and show an incorrect (too long) countdown. " +
-        "To fix it: check the real reset time on claude.ai, then enter it here " +
-        "(e.g. 14:45 or 2:45 PM, in your local time). " +
-        "The override is active until that time passes — after that the bar " +
-        "reverts to log-derived values automatically. " +
-        "Clear this field once your window has reset."
+        "To fix it: check claude.ai — it shows how long until your window resets " +
+        "(e.g. '1h 16m'). Enter that duration here and save. " +
+        "The countdown starts from the moment you save, so enter it promptly. " +
+        "Accepted formats: 1h 16m · 1h · 45m. " +
+        "The override expires automatically when the time runs out."
       )
       .addText(text => text
-        .setPlaceholder("e.g. 14:45 or 2:45 PM")
+        .setPlaceholder("e.g. 1h 16m")
         .setValue(this.plugin.settings.resetTimeOverride || "")
         .onChange(async (v) => {
           this.plugin.settings.resetTimeOverride = v.trim();
+          const ms = parseDurationMs(v.trim());
+          this.plugin.settings.resetTimeOverrideEnd = ms ? Date.now() + ms : 0;
           await this.plugin.saveSettings();
           this._refreshViews();
         })
