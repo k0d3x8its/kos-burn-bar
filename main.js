@@ -39,6 +39,26 @@ const PRICING = {
   default: { input: 3/1e6,    output: 15/1e6,  cacheWrite: 3.75/1e6,  cacheRead: 0.30/1e6 },
 };
 
+/**
+ * Parse a user-supplied reset time string ("14:45" or "2:45 PM") into a Date
+ * for today. Returns null if the string is empty, invalid, or already past.
+ * Expired overrides return null so the bar reverts to log-derived values.
+ */
+function parseResetOverride(str) {
+  if (!str || !str.trim()) return null;
+  const m = str.trim().match(/^(\d{1,2}):(\d{2})(?:\s*(am|pm))?$/i);
+  if (!m) return null;
+  let h = parseInt(m[1]);
+  const min = parseInt(m[2]);
+  const meridiem = m[3] ? m[3].toLowerCase() : null;
+  if (meridiem === "pm" && h < 12) h += 12;
+  if (meridiem === "am" && h === 12) h = 0;
+  if (h < 0 || h > 23 || min < 0 || min > 59) return null;
+  const now = new Date();
+  const t = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, min, 0, 0);
+  return t > now ? t : null;
+}
+
 function getPrice(model) {
   if (!model) return PRICING.default;
   if (model.includes("opus"))  return PRICING.opus;
@@ -55,12 +75,13 @@ function recordCost(r) {
 }
 
 const DEFAULT_SETTINGS = {
-  manualLimit:   0,
-  fallbackLimit: 44000,
-  refreshSecs:   5,
-  autoOpen:      true,
-  timezone:      "America/New_York",
-  projectFilter: "",       // manual partial-path filter (advanced override)
+  manualLimit:       0,
+  fallbackLimit:     44000,
+  refreshSecs:       5,
+  autoOpen:          true,
+  timezone:          "America/New_York",
+  projectFilter:     "",
+  resetTimeOverride: "",
 };
 
 
@@ -643,9 +664,10 @@ class BurnBarView extends ItemView {
       ? s.manualLimit
       : detectTokenLimit(records, s.fallbackLimit);
     const u = computeUsage(records, tokenLimit);
+    const overrideEnd = parseResetOverride(s.resetTimeOverride || "");
 
     // Persist state for tick() extrapolation
-    this._sessionEnd          = u.isIdle ? null : u.sessionEnd;
+    this._sessionEnd          = overrideEnd || (u.isIdle ? null : u.sessionEnd);
     this._isIdle              = u.isIdle;
     this._burnRate            = u.burnRate;
     this._msgBurnRate         = u.msgBurnRate;
@@ -705,8 +727,9 @@ class BurnBarView extends ItemView {
     e.costValue.textContent = "$" + u.costRate.toFixed(4) + " /min";
     e.costSub.textContent   = "$" + u.costUsed.toFixed(3) + " used via API";
 
-    e.resetSub.textContent = u.sessionEnd
-      ? "@ " + this.fmtTime(u.sessionEnd)
+    const effectiveEnd = overrideEnd || u.sessionEnd;
+    e.resetSub.textContent = effectiveEnd
+      ? "@ " + this.fmtTime(effectiveEnd) + (overrideEnd ? " · manual" : "")
       : "no active window";
 
     const topModel = u.models.length > 0 ? u.models[0] : null;
@@ -842,6 +865,28 @@ class BurnBarSettingTab extends PluginSettingTab {
         .onChange(async (v) => {
           this.plugin.settings.timezone = v || "America/New_York";
           await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(containerEl)
+      .setName("Reset time override")
+      .setDesc(
+        "The burn bar infers your reset time from local session logs. " +
+        "If you pause Claude Code for more than an hour mid-window, the log parser " +
+        "may start a new session block and show an incorrect (too long) countdown. " +
+        "To fix it: check the real reset time on claude.ai, then enter it here " +
+        "(e.g. 14:45 or 2:45 PM, in your local time). " +
+        "The override is active until that time passes — after that the bar " +
+        "reverts to log-derived values automatically. " +
+        "Clear this field once your window has reset."
+      )
+      .addText(text => text
+        .setPlaceholder("e.g. 14:45 or 2:45 PM")
+        .setValue(this.plugin.settings.resetTimeOverride || "")
+        .onChange(async (v) => {
+          this.plugin.settings.resetTimeOverride = v.trim();
+          await this.plugin.saveSettings();
+          this._refreshViews();
         })
       );
 
