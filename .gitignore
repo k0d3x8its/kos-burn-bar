@@ -3,3 +3,11 @@ coverage/
 
 # Obsidian writes user settings here — personal, not plugin code
 data.json
+
+# Claude Code artifacts
+session-log.md
+task_plan.md
+findings.md
+progress.md
+.claude/plugins/
+.claude/skills/
