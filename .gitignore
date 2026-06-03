@@ -6,3 +6,24 @@ data.json
 
 # Release artifacts
 RELEASE-NOTES.md
+
+.compound-engineering/*.local.yaml
+
+# --- added by /dev-setup ---
+.env
+.env.*
+!.env.example
+.claude/trello-board
+.claude/settings.local.json
+.claude/plugins/
+.claude/skills/
+task_plan.md
+findings.md
+progress.md
+session-log.md
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
