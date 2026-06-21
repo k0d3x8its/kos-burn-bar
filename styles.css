@@ -18,6 +18,9 @@
   --kos-text:      #e8d8c4;
   /* bright accent for live indicators and key numbers */
   --kos-bright:    #f0c080;
+  /* recording-red for the "live capture" dot — bright crimson so it reads as a
+     REC light against the warm copper palette without muddying into it */
+  --kos-rec:       #ff3b30;
   --kos-mono:      'Share Tech Mono', 'Fira Code', 'Consolas', monospace;
 }
 
@@ -93,6 +96,31 @@
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.12; }
 }
+
+/* Freshness states for the live dot (set by renderState from the file mtime).
+   "live" = actively capturing -> a bright recording-red with a soft glow and a
+   pulse, reading as a REC indicator. Bright crimson (not a brick red) so it pops
+   off the dark copper theme instead of blending into --kos-copper3. */
+.kos-live-dot.kos-dot-live {
+  background: var(--kos-rec, #ff3b30);
+  box-shadow: 0 0 4px 1px rgba(255, 59, 48, 0.6);
+}
+.kos-live-dot.kos-dot-stale {
+  background: var(--kos-dim);
+  box-shadow: none;
+  animation: none;            /* stop blinking when there's no fresh data */
+}
+
+/* "LIVE" text inline after the dot — only shown when capture is fresh */
+.kos-live-label {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--kos-rec, #ff3b30);
+  text-transform: uppercase;
+}
+
+/* Dimmed value — a missing/stale percentage rendered as --% (never a fake 0). */
+.kos-stale { opacity: 0.4; }
 
 .kos-label-right {
   font-size: 9px;
@@ -237,7 +265,9 @@
 
 /* Right: token/message count */
 .kos-count-block {
-  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   min-width: 80px;
   line-height: 1.3;
   flex-shrink: 0;
@@ -256,7 +286,6 @@
 .kos-count-limit {
   font-size: 11px;
   color: var(--kos-dim);
-  display: block;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
