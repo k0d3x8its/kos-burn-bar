@@ -15,14 +15,14 @@
 - Board: Kodex OS
 
 ## Skills
-- `/sync-trello` — push task_plan.md Goals to Trello
+- `/sync-trello` — push .work/PLAN.md Goals to Trello
 - `/handoff`     — end-of-session context preservation
-- `/plan`        — create/update task_plan.md
+- `/plan`        — create/update .work/PLAN.md
 
 ## Session Rules
-- Always read task_plan.md, findings.md, and progress.md if they exist
+- Always read .work/PLAN.md, .work/FINDINGS.md, and .work/PROGRESS.md if they exist
 - When I paste a re-entry prompt, treat it as ground truth for project state
 
 ## Current State
-See task_plan.md for active goals and progress.
-See session-log.md for recent session history.
+See .work/PLAN.md for active goals and progress.
+See .memory/SESSION-LOG.md for recent session history.
