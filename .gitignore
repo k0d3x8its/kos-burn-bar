@@ -7,6 +7,14 @@ data.json
 # Release artifacts
 RELEASE-NOTES.md
 
+# git-crypt: un-ignore session log + planning files so they encrypt + commit
+!.memory/SESSION-LOG.md
+# .memory/ARCHIVE-LOG.md stays machine-local (large, low sync value)
+/.memory/ARCHIVE-LOG.md
+!.work/PLAN.md
+!.work/FINDINGS.md
+!.work/PROGRESS.md
+
 .compound-engineering/*.local.yaml
 
 # --- added by /dev-setup ---
