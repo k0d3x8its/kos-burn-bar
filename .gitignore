@@ -17,10 +17,6 @@ RELEASE-NOTES.md
 .claude/settings.local.json
 .claude/plugins/
 .claude/skills/
-task_plan.md
-findings.md
-progress.md
-session-log.md
 .DS_Store
 Thumbs.db
 .vscode/
